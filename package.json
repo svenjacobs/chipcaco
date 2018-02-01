@@ -1,7 +1,7 @@
 {
   "name": "chipcaco",
   "version": "0.1.0",
-  "description": "Command line tool and library to convert .264 files produced by some Chinese IP cameras",
+  "description": "Command line tool and library for converting .264 files produced by some Chinese IP cameras",
   "main": "src/lib.js",
   "bin": {
     "chipcaco": "src/cli.js"
