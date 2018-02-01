@@ -6,6 +6,7 @@
   "bin": {
     "chipcaco": "src/cli.js"
   },
+  "types": "./src/chipcaco.d.ts",
   "engines": {
     "node": ">=8.0"
   },
@@ -30,6 +31,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^9.4.0",
     "eslint": "^4.16.0",
     "eslint-config-standard": "^11.0.0-beta.0",
     "eslint-plugin-import": "^2.8.0",
