@@ -3,4 +3,4 @@ export function buffer(inBuf: Buffer,
                        size: number): Promise<{ inBuf: Buffer, outBuf: Buffer, bytesWritten: number }>;
 
 export function file(srcFile: string,
-                     destFile: string): Promise<boolean>;
+                     destFile: string): Promise<void>;

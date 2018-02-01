@@ -31,15 +31,6 @@
  * For a more detailed explanation see https://www.spitzner.org/kkmoon.html.
  */
 
-const util = require('util')
-const fs = require('fs')
-
-const stat = util.promisify(fs.stat)
-const open = util.promisify(fs.open)
-const read = util.promisify(fs.read)
-const write = util.promisify(fs.write)
-const close = util.promisify(fs.close)
-
 const chipcaco = module.exports
 
 /**
@@ -53,8 +44,9 @@ const chipcaco = module.exports
  * @param {Buffer} outBuf Destination buffer where converted data is written to
  * @param {number} size Size of source buffer
  * @returns {Promise<{inBuf: Buffer, outBuf: Buffer, bytesWritten: number}>} Promise of object { inBuf, outBuf, bytesWritten }
+ * @see file
  */
-chipcaco.buffer = (inBuf, outBuf, size) => new Promise((resolve, reject) => {
+chipcaco.buffer = async (inBuf, outBuf, size) => new Promise((resolve, reject) => {
   let inPos = 0
   let outPos = 0
 
@@ -89,22 +81,35 @@ chipcaco.buffer = (inBuf, outBuf, size) => new Promise((resolve, reject) => {
  *
  * @param {string} srcFile Path to source file
  * @param {string} destFile Path to destination file
+ * @returns {Promise<void>} Promise of void
  * @see buffer
- * @returns {Promise<boolean>} Promise which resolves to "true" on success
  */
-chipcaco.file = (srcFile, destFile) =>
-  stat(srcFile)
-    .then((stats) => open(srcFile, 'r').then((inFd) => ({ stats, inFd })))
-    .then(({ stats, inFd }) => {
-      const inBuf = Buffer.allocUnsafe(stats.size)
-      return read(inFd, inBuf, 0, stats.size, 0).then((args) => ({ stats, inFd, bytesRead: args.bytesRead, inBuf: args.buffer }))
-    })
-    .then(({ stats, inFd, bytesRead, inBuf }) => {
-      const outBuf = Buffer.alloc(stats.size)
-      return chipcaco.buffer(inBuf, outBuf, bytesRead).then(({ bytesWritten }) => ({ inFd, outBuf, bytesWritten }))
-    })
-    .then(({ inFd, outBuf, bytesWritten }) => close(inFd).then(() => ({ outBuf, bytesWritten })))
-    .then(({ outBuf, bytesWritten }) => open(destFile, 'w').then((outFd) => ({ outFd, outBuf, bytesWritten })))
-    .then(({ outFd, outBuf, bytesWritten }) => write(outFd, outBuf, 0, bytesWritten, 0).then(() => outFd))
-    .then((outFd) => close(outFd))
-    .then(() => true)
+chipcaco.file = async (srcFile, destFile) => {
+  const util = require('util')
+  const fs = require('fs')
+
+  const stat = util.promisify(fs.stat)
+  const open = util.promisify(fs.open)
+  const read = util.promisify(fs.read)
+  const write = util.promisify(fs.write)
+  const close = util.promisify(fs.close)
+
+  const stats = await stat(srcFile)
+  const inBuf = Buffer.allocUnsafe(stats.size)
+  const outBuf = Buffer.alloc(stats.size)
+
+  // Read src file into buffer
+  const inFd = await open(srcFile, 'r')
+  const { bytesRead } = await read(inFd, inBuf, 0, stats.size, 0)
+  await close(inFd)
+
+  // Write processed result into outBuf
+  const { bytesWritten } = await chipcaco.buffer(inBuf, outBuf, bytesRead)
+
+  // Write dest file
+  const outFd = await open(destFile, 'w')
+  await write(outFd, outBuf, 0, bytesWritten, 0)
+  await close(outFd)
+
+  return Promise.resolve()
+}

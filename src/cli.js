@@ -6,7 +6,7 @@ const commander = require('commander')
 const chipcaco = require('./lib')
 
 commander
-  .version('0.1.0', '-v, --version')
+  .version('0.1.1', '-v, --version')
   .arguments('<src> <dest>')
 
 commander.parse(process.argv)
